@@ -15,6 +15,8 @@ uniform vec3 aColor = vec3(1.0f, 1.0f, 1.0f);
 uniform mat4 lightSpaceMatrix = mat4(1.0);
 uniform float uvMultiplier = 1.0;
 
+uniform sampler2D heightmap;
+
 out vec4 vertexColor;
 out vec2 vertexUV;
 out vec3 FragPos;
@@ -26,9 +28,11 @@ out float visibility;
 
 void main()
 {
+	vec3 vertex = aPos;
+	//vertex.y = texture(heightmap, aUV).g * 100.0f;
 
     mat4 mvMatrix = viewMatrix * worldMatrix;
-    ioEyeSpacePosition = mvMatrix * vec4(aPos, 1.0f);
+    ioEyeSpacePosition = mvMatrix * vec4(vertex, 1.0f);
 
     float distance = length(ioEyeSpacePosition.xyz);
     visibility = exp(-pow((distance * density), gradient));
@@ -36,10 +40,10 @@ void main()
 
 
     mat4 modelViewProjection = projectionMatrix * viewMatrix * worldMatrix;
-    gl_Position = modelViewProjection * vec4(aPos.x, aPos.y, aPos.z, 1.0);
+    gl_Position = modelViewProjection * vec4(vertex.x, vertex.y, vertex.z, 1.0);
     vertexColor = vec4(aColor.r, aColor.g, aColor.b, 1.0f);
     Normal = mat3(transpose(inverse(worldMatrix))) * aNormal;
-    FragPos = vec3(worldMatrix * vec4(aPos, 1.0));
+    FragPos = vec3(worldMatrix * vec4(vertex, 1.0));
     vec2 UV = vec2(aUV.x * uvMultiplier, aUV.y * uvMultiplier);
     vertexUV = UV;
     fragment_position_light_space = lightSpaceMatrix * vec4(FragPos, 1.0);

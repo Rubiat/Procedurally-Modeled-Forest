@@ -7,10 +7,12 @@
 #include <algorithm>
 
 GLFWwindow* window = NULL;
+GLfloat image[256][256][3];
 
 struct VertexTexture {
 	VertexTexture(vec3 _position, vec2 _uv, vec3 _normal)
 		: position(_position), uv(_uv), normal(_normal) {}
+	VertexTexture() : position(vec3(1.0f)), uv(vec2(1.0f)), normal(vec3(1.0f)) {}
 
 	glm::vec3 position;
 	glm::vec2 uv;
@@ -252,17 +254,61 @@ int createVertexArrayObjectCube()
 }
 
 int createVertexArrayObjectGround() {
+	// The grid will be 128x128 (instead of 100x100), and for the triangle strips 
+	// it will be 32x32. Therefore we will have to multiply by 4 (instead of 50) while rendering
+	int const size = 32;
+	int const numOfVertices = (size * size * 2) + (2 * size) + (2 * size); // 2176
+	// First size * size * 2 is number of triangles since size means squares (i.e: 32x32 squares = 64x64 triangles)
+	// Second 2 * size is because in triangle strips there are n + 2 vertices and we multiply here
+	// by size because we have N=size rows and for each row we add 2 vertices
+	// Third 2 * size is because of degenerate triangles, we add extra 2 vertices at the end of each row
 
-	VertexTexture vertexArray[] = {
-		// position,                               uv						normal
-		VertexTexture(vec3(-1.0f, 0.0f, 1.0f), vec2(0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f)), // Bottom left point
-		VertexTexture(vec3(1.0f, 0.0f, 1.0f), vec2(1.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f)), // Bottom right point
-		VertexTexture(vec3(1.0f, 0.0f, -1.0f), vec2(1.0f, 1.0f), vec3(0.0f, 1.0f, 0.0f)), // Top right point
+	VertexTexture vertexArray[numOfVertices];
+	//	// position,                               uv						normal
 
-		VertexTexture(vec3(-1.0f, 0.0f, 1.0f), vec2(0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f)), // Bottom left point
-		VertexTexture(vec3(1.0f, 0.0f, -1.0f), vec2(1.0f, 1.0f), vec3(0.0f, 1.0f, 0.0f)), // Top right point
-		VertexTexture(vec3(-1.0f, 0.0f, -1.0f), vec2(0.0f, 1.0f), vec3(0.0f, 1.0f, 0.0f)), // Top Left point
-	};
+	// Initial position of vertex and uv
+	vec3 vertex = vec3(-16.0f, 0.0f, 16.0f);
+	vec2 uv = vec2(0.0f, 0.0f);
+	
+	int index = 0;
+	int rowVertices = size * 2 + 2; // # of vertices in each row (minus the 2 vertices for degenerate triangles)
+
+	for (int j = 1; j <= size; j++) { // Repeat it 32 times for each row
+		// In each iteration, a total of 68 vertices are added (68 for actual triangles + 2 for degenerates)
+
+		for (int i = 0; i < rowVertices; i++) {// Do it 66 times -> 64 triangles = 66 vertices
+
+			VertexTexture v(vertex, uv, vec3(0.0f, 1.0f, 0.0f));
+			vertexArray[index++] = v;
+			// When assigning to an index, increment it at the same time (index++)
+
+			if (i % 2 == 0) {
+				vertex.z--;
+				uv.t += (1.0f / size); // 1.0f / 32.0f;
+			}
+			else {
+				vertex.z++;
+				vertex.x++;
+				uv.t -= (1.0f / size);
+				uv.s += (1.0f / size);
+			}
+		}
+
+		// The following is for the 2 degenerate triangles
+
+		// The first degenerate is the same as the last vertex of the previous row
+		vertexArray[index++] = vertexArray[index - 1];
+
+		// Resetting the values correctly to the beginning of next row
+		vertex.x -= (size + 1); // size+1 because we incremented by 1 the x value in the else statement
+		vertex.z--; // Because we did vertex.z++ so we bring it back
+		uv.s = 0;
+		uv.t = ((float)j / size); // (1.0f / size), (2.0f / size), (2.0f / size), etc;
+
+		// The second degenerate is the same as the first vertex of the next row
+		VertexTexture v(vertex, uv, vec3(0.0f, 1.0f, 0.0f));
+		vertexArray[index++] = v;
+	}
 
 	// Create a vertex array
 	GLuint vertexArrayObject;
@@ -556,7 +602,7 @@ double interpolate(double a, double b, double x)
 }
 
 GLuint makeNoiseTexture(int seed, int zoom, double persistence, float lightColor[3], float darkColor[3]) {
-	GLfloat image[256][256][3];
+	//GLfloat image[256][256][3];
 	PerlinNoise myNoise(seed, zoom, persistence);
 
 	double c;

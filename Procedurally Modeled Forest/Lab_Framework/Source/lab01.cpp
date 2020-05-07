@@ -144,7 +144,7 @@ int main(int argc, char*argv[])
 	//----------------------------------------Camera------------------------------------------//
 
 	// Camera parameters for view transform
-	vec3 cameraPosition(0.6f, 1.0f, 1.0f);
+	vec3 cameraPosition(0.6f, 10.0f, 1.0f);
 	vec3 cameraLookAt(0.0f, 0.0f, -1.0f);
 	vec3 cameraUp(0.0f, 1.0f, 0.0f);
 	vec3 cameraTarget = vec3(0.0f, 0.0f, 0.0f);
@@ -210,8 +210,8 @@ int main(int argc, char*argv[])
 	bool snowEnabled = true; // Used for toggling snow on/off
 	bool snowPressed = false;// Goes with above /\
 
-	ISoundEngine* SoundEngine = createIrrKlangDevice();
-	SoundEngine->play2D("../Assets/Audio/piano.mp3", GL_TRUE);
+	/*ISoundEngine* SoundEngine = createIrrKlangDevice();
+	SoundEngine->play2D("../Assets/Audio/piano.mp3", GL_TRUE);*/
 
 	//-----------------------------------------Fog ------------------------------------------//
 
@@ -237,10 +237,10 @@ int main(int argc, char*argv[])
 	for (int i = 0; i < numberOfTrees; i++) {
 		while (true) {
 			bool tooClose = false;
-			x = (rand() % 101); // Generate number from 0 to 100
-			x -= 50; // Make its range from -50 to 50
-			z = (rand() % 101);
-			z -= 50;
+			x = (rand() % 129); // Generate number from 0 to 128
+			x -= 64; // Make its range from -64 to 64
+			z = (rand() % 129);
+			z -= 64;
 
 			for (int j = 0; j < 4; j++) {// 4 because there are 4 quadrants
 				for (int k = 0; k < models[j].size(); k++) {
@@ -313,28 +313,27 @@ int main(int argc, char*argv[])
 		glBindVertexArray(vaoGround);
 		glUseProgram(shaderProgramShadow);
 
-		mat4 groundWorldMatrix = translate(mat4(1.0f), vec3(0.0f, 0.0f, 0.0f)) *
-			scale(mat4(1.0f), vec3(50.0f, 1.0f, 50.0f)); // 100 * 100 grid now
+		mat4 groundWorldMatrix = scale(mat4(1.0f), vec3(4.0f, 1.0f, 4.0f)); // 128 * 128 grid now
 		setMat4(shaderProgramShadow, "worldMatrix", groundWorldMatrix);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glDrawArrays(GL_TRIANGLES, 0, 2176);
 
 		//----------------------------------Draw trees shadow----------------------------------//
 
-		for (int i = 0; i < 4; i++) {
-			for (int j = 0; j < models[i].size(); j++) {
-				worldMatrix = translate(mat4(1.0f), models[i][j].translationVector) *
-					scale(mat4(1.0f), models[i][j].scaleVector);
-				setMat4(shaderProgramShadow, "worldMatrix", worldMatrix);
+		//for (int i = 0; i < 4; i++) {
+		//	for (int j = 0; j < models[i].size(); j++) {
+		//		worldMatrix = translate(mat4(1.0f), models[i][j].translationVector) *
+		//			scale(mat4(1.0f), models[i][j].scaleVector);
+		//		setMat4(shaderProgramShadow, "worldMatrix", worldMatrix);
 
-				// Draw trunk
-				glBindVertexArray(vaoTrunkModel);
-				glDrawElements(GL_TRIANGLES, trunkVertices, GL_UNSIGNED_INT, 0);
+		//		// Draw trunk
+		//		glBindVertexArray(vaoTrunkModel);
+		//		glDrawElements(GL_TRIANGLES, trunkVertices, GL_UNSIGNED_INT, 0);
 
-				// Draw leaves
-				glBindVertexArray(vaoLeavesModel);
-				glDrawElements(GL_TRIANGLES, leavesVertices, GL_UNSIGNED_INT, 0);
-			}
-		}
+		//		// Draw leaves
+		//		glBindVertexArray(vaoLeavesModel);
+		//		glDrawElements(GL_TRIANGLES, leavesVertices, GL_UNSIGNED_INT, 0);
+		//	}
+		//}
 
 		//----------------------------------Draw wolf shadow----------------------------------//
 
@@ -363,48 +362,49 @@ int main(int argc, char*argv[])
 		glBindVertexArray(vaoGround);
 		glUseProgram(shaderProgramTexture);
 
-		groundWorldMatrix = translate(mat4(1.0f), vec3(0.0f, 0.0f, 0.0f)) * 
-			scale(mat4(1.0f), vec3(50.0f, 1.0f, 50.0f)); // 100 * 100 grid now
+		groundWorldMatrix = scale(mat4(1.0f), vec3(4.0f, 1.0f, 4.0f)); // 128 * 128 grid now
 		setMat4(shaderProgramTexture, "worldMatrix", groundWorldMatrix);
-		setVec3(shaderProgramTexture, "aColor", vec3(1.0f, 1.0f, 1.0f));
 
-		// The following is to make the grass texture repeat so that it doesn't become blurry
-		setFloat(shaderProgramTexture, "uvMultiplier", 12.0f);
-		// Activate texture1 where the grass texture is located
 		glActiveTexture(GL_TEXTURE0 + 1);
 		GLuint textureLocation = glGetUniformLocation(shaderProgramTexture, "textureSampler");
 		glUniform1i(textureLocation, 1);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		setFloat(shaderProgramTexture, "uvMultiplier", 1.0f);
-		setVec3(shaderProgramTexture, "aColor", vec3(1.0f, 1.0f, 1.0f));
+		textureLocation = glGetUniformLocation(shaderProgramTexture, "heightmap");
+		glUniform1i(textureLocation, 1);
+		glCullFace(GL_FRONT);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 2176);
+		glCullFace(GL_BACK);
+
+		// The following is to make the grass texture repeat so that it doesn't become blurry
+		//setFloat(shaderProgramTexture, "uvMultiplier", 12.0f);
+		//setFloat(shaderProgramTexture, "uvMultiplier", 1.0f);
 
 		//-----------------------------------Draw Trees---------------------------------------//
 
-		for (int i = 0; i < 4; i++) {
-			int size = models[i].size();
-			if (i == 0) {
-				size--;
-			}
-			for (int j = 0; j < size; j++) {
-				worldMatrix = translate(mat4(1.0f), models[i][j].translationVector) *
-					scale(mat4(1.0f), models[i][j].scaleVector);
-				setMat4(shaderProgramTexture, "worldMatrix", worldMatrix);
+		//for (int i = 0; i < 4; i++) {
+		//	int size = models[i].size();
+		//	if (i == 0) {
+		//		size--;
+		//	}
+		//	for (int j = 0; j < size; j++) {
+		//		worldMatrix = translate(mat4(1.0f), models[i][j].translationVector) *
+		//			scale(mat4(1.0f), models[i][j].scaleVector);
+		//		setMat4(shaderProgramTexture, "worldMatrix", worldMatrix);
 
-				// Draw trunk
-				glActiveTexture(GL_TEXTURE0 + 4);
-				glBindTexture(GL_TEXTURE_2D, trunkTextureID);
-				setTexture(shaderProgramTexture, "textureSampler", 4);
-				glBindVertexArray(vaoTrunkModel);
-				glDrawElements(GL_TRIANGLES, trunkVertices, GL_UNSIGNED_INT, 0);
+		//		// Draw trunk
+		//		glActiveTexture(GL_TEXTURE0 + 4);
+		//		glBindTexture(GL_TEXTURE_2D, trunkTextureID);
+		//		setTexture(shaderProgramTexture, "textureSampler", 4);
+		//		glBindVertexArray(vaoTrunkModel);
+		//		glDrawElements(GL_TRIANGLES, trunkVertices, GL_UNSIGNED_INT, 0);
 
-				// Draw leaves
-				glActiveTexture(GL_TEXTURE0 + 1);
-				glBindTexture(GL_TEXTURE_2D, grassTextureID);
-				setTexture(shaderProgramTexture, "textureSampler", 1);
-				glBindVertexArray(vaoLeavesModel);
-				glDrawElements(GL_TRIANGLES, leavesVertices, GL_UNSIGNED_INT, 0);
-			}
-		}
+		//		// Draw leaves
+		//		glActiveTexture(GL_TEXTURE0 + 1);
+		//		glBindTexture(GL_TEXTURE_2D, grassTextureID);
+		//		setTexture(shaderProgramTexture, "textureSampler", 1);
+		//		glBindVertexArray(vaoLeavesModel);
+		//		glDrawElements(GL_TRIANGLES, leavesVertices, GL_UNSIGNED_INT, 0);
+		//	}
+		//}
 
 		//---------------------------------Draw Snow Particles----------------------------------//
 		

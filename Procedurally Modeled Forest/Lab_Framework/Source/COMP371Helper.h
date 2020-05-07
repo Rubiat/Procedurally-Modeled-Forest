@@ -21,6 +21,7 @@ using namespace glm;
 using namespace std;
 
 extern GLFWwindow* window;
+extern GLfloat image[256][256][3];
 
 struct BoundingBox {
 	BoundingBox(vec3 _position, float _x, float _y, float _z) : position(_position), sizeX(_x), sizeY(_y), sizeZ(_z) {}
