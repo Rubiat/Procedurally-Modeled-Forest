@@ -16,12 +16,14 @@
 #include <ctime> 
 #include <fstream>
 #include <string>
+#include <vector>
+
+#include "PerlinNoise.h"
 
 using namespace glm;
 using namespace std;
 
 extern GLFWwindow* window;
-extern GLfloat image[256][256][3];
 
 struct BoundingBox {
 	BoundingBox(vec3 _position, float _x, float _y, float _z) : position(_position), sizeX(_x), sizeY(_y), sizeZ(_z) {}
@@ -36,9 +38,10 @@ struct BoundingBox {
 bool initContext();
 int compileAndLinkShaders(string vertexPath, string fragmentPath);
 int createVertexArrayObjectCube();
-int createVertexArrayObjectGround();
+int createVertexArrayObjectGround(vector<vector<float>> grid);
 int createVertexArrayObjectParticles();
 GLuint loadTexture(const char* filename);
+double interpolate(double a, double b, double x);
 GLuint makeNoiseTexture(int seed, int zoom, double persistence, float lightColor[3], float darkColor[3]);
 GLuint setupModelEBO(string path, int& vertexCount);
 

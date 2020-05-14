@@ -29,7 +29,7 @@ out float visibility;
 void main()
 {
 	vec3 vertex = aPos;
-	//vertex.y = texture(heightmap, aUV).g * 100.0f;
+	//vertex.y = texture(heightmap, aUV).g * 10.0f;
 
     mat4 mvMatrix = viewMatrix * worldMatrix;
     ioEyeSpacePosition = mvMatrix * vec4(vertex, 1.0f);

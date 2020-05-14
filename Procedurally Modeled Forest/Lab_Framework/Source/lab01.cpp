@@ -34,6 +34,7 @@ int main(int argc, char*argv[])
 	GLuint snowflakeTextureID = loadTexture("Textures/particle.png");
 	GLuint trunkTextureID = loadTexture("Textures/trunk.jpg");
 	GLuint wolfTextureID = loadTexture("Textures/marble.jpg");
+	GLuint heightmapTextureID = loadTexture("Textures/heightmap.jpg");
 #else
 	int grassSeed = 2354583;
 	int grassZoom = 1;
@@ -42,9 +43,13 @@ int main(int argc, char*argv[])
 	GLuint snowflakeTextureID = loadTexture("../Assets/Textures/particle.png");
 	GLuint trunkTextureID = loadTexture("../Assets/Textures/trunk.jpg");
 	GLuint marbleTextureID = loadTexture("../Assets/Textures/marble.jpg");
+	GLuint heightmapTextureID = loadTexture("../Assets/Textures/heightmap.jpg");
 #endif
 
-	
+	Ground ground;
+	ground.generateHeight(128); // Make 128x128 heightMap
+
+
 	// GL_TEXTURE0 IS RESERVED FOR SHADOW MAPPING
 	glActiveTexture(GL_TEXTURE0 + 1);
 	glBindTexture(GL_TEXTURE_2D, grassTextureID);
@@ -55,6 +60,8 @@ int main(int argc, char*argv[])
 	glBindTexture(GL_TEXTURE_2D, trunkTextureID);
 	glActiveTexture(GL_TEXTURE0 + 5);
 	glBindTexture(GL_TEXTURE_2D, marbleTextureID);
+	glActiveTexture(GL_TEXTURE0 + 6);
+	glBindTexture(GL_TEXTURE_2D, heightmapTextureID);
 
 	//------------------------------------Shader Programs----------------------------------------//
 
@@ -107,7 +114,7 @@ int main(int argc, char*argv[])
 	GLuint vaoWolfModel = setupModelEBO(wolfPath, wolfVertices);
 
 	int vaoCube = createVertexArrayObjectCube();
-	int vaoGround = createVertexArrayObjectGround();
+	int vaoGround = createVertexArrayObjectGround(ground.grid);
 	int vaoSnow = createVertexArrayObjectParticles();
 
 	//-----------------------------------------SHADOWS--------------------------------------//
@@ -263,7 +270,7 @@ int main(int argc, char*argv[])
 		Tree tree(vec3(x, 0.0f, z), vec3(scaleFactor, scaleFactor, scaleFactor));
 
 		// Insert the tree into the vector of its quadrant
-		models[getCurrentQuadrant(vec3(x, 0.0f, z))].push_back(tree);
+		//models[getCurrentQuadrant(vec3(x, 0.0f, z))].push_back(tree);
 	}
 
 	//--------------------------------------Create wolf-----------------------------------------//
@@ -368,8 +375,8 @@ int main(int argc, char*argv[])
 		glActiveTexture(GL_TEXTURE0 + 1);
 		GLuint textureLocation = glGetUniformLocation(shaderProgramTexture, "textureSampler");
 		glUniform1i(textureLocation, 1);
-		textureLocation = glGetUniformLocation(shaderProgramTexture, "heightmap");
-		glUniform1i(textureLocation, 1);
+		/*textureLocation = glGetUniformLocation(shaderProgramTexture, "heightmap");
+		glUniform1i(textureLocation, 6);*/
 		glCullFace(GL_FRONT);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 2176);
 		glCullFace(GL_BACK);

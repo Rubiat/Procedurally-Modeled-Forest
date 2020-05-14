@@ -3,11 +3,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include "OBJloaderV2.h"
-#include "PerlinNoise.h"
 #include <algorithm>
 
 GLFWwindow* window = NULL;
-GLfloat image[256][256][3];
 
 struct VertexTexture {
 	VertexTexture(vec3 _position, vec2 _uv, vec3 _normal)
@@ -253,7 +251,7 @@ int createVertexArrayObjectCube()
 	return vertexArrayObject;
 }
 
-int createVertexArrayObjectGround() {
+int createVertexArrayObjectGround(vector<vector<float>> grid) {
 	// The grid will be 128x128 (instead of 100x100), and for the triangle strips 
 	// it will be 32x32. Therefore we will have to multiply by 4 (instead of 50) while rendering
 	int const size = 32;
@@ -273,11 +271,18 @@ int createVertexArrayObjectGround() {
 	int index = 0;
 	int rowVertices = size * 2 + 2; // # of vertices in each row (minus the 2 vertices for degenerate triangles)
 
+	// The following two int are used to translate the uv into map coordinates
+	int uvX = 0;
+	int uvZ = 0;
+
 	for (int j = 1; j <= size; j++) { // Repeat it 32 times for each row
 		// In each iteration, a total of 68 vertices are added (68 for actual triangles + 2 for degenerates)
 
 		for (int i = 0; i < rowVertices; i++) {// Do it 66 times -> 64 triangles = 66 vertices
 
+			uvX = (uv.s * 32.0f) * 4.0f;
+			uvZ = (uv.t * 32.0f) * 4.0f;
+			vertex.y = grid[uvX][uvZ];
 			VertexTexture v(vertex, uv, vec3(0.0f, 1.0f, 0.0f));
 			vertexArray[index++] = v;
 			// When assigning to an index, increment it at the same time (index++)
@@ -304,6 +309,9 @@ int createVertexArrayObjectGround() {
 		vertex.z--; // Because we did vertex.z++ so we bring it back
 		uv.s = 0;
 		uv.t = ((float)j / size); // (1.0f / size), (2.0f / size), (2.0f / size), etc;
+		uvX = (uv.s * 32.0f) * 4.0f;
+		uvZ = (uv.t * 32.0f) * 4.0f;
+		vertex.y = grid[uvX][uvZ];
 
 		// The second degenerate is the same as the first vertex of the next row
 		VertexTexture v(vertex, uv, vec3(0.0f, 1.0f, 0.0f));
@@ -602,7 +610,7 @@ double interpolate(double a, double b, double x)
 }
 
 GLuint makeNoiseTexture(int seed, int zoom, double persistence, float lightColor[3], float darkColor[3]) {
-	//GLfloat image[256][256][3];
+	GLfloat image[256][256][3];
 	PerlinNoise myNoise(seed, zoom, persistence);
 
 	double c;
