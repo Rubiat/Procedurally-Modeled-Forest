@@ -50,6 +50,10 @@ public:
 
 	void generateHeight(int resolution); // Ex: 128 for 128x128, 256 for 256x256
 	float getNoise(int x, int z);
+	float getSmoothNoise(int x, int z);
+
+	float interpolate(float a, float b, float blend);
+	float getInterpolatedNoise(float x, float z);
 
 	vector<vector<float>> grid;
 	float amplitude;

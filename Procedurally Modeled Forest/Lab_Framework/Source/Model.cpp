@@ -61,7 +61,7 @@ Ground::Ground()
 		this->grid.push_back(vector<float>());
 	}
 
-	this->amplitude = 20.0f;
+	this->amplitude = 10.0f;
 	this->seed = (rand() % 1000000000);
 }
 
@@ -119,7 +119,11 @@ void Ground::generateHeight(int resolution)
 	
 	for (int i = 0; i < (resolution + 1); i++) {
 		for (int j = 0; j < (resolution + 1); j++) {
-			height = getNoise(i, j) * this->amplitude;
+			height = getInterpolatedNoise(i / 12.0f, j / 12.0f) * this->amplitude;
+			height += getInterpolatedNoise(i / 6.0f, j / 6.0f) * this->amplitude / 3.0f;
+			height += getInterpolatedNoise(i / 3.0f, j / 3.0f) * this->amplitude / 9.0f;
+			// We do it three times to add more small frequencies 
+
 			this->grid[i].push_back(height);
 		}
 	}
@@ -131,4 +135,41 @@ float Ground::getNoise(int x, int z)
 	// Generate float from -1.0f to 1.0f
 	float height = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX)) * 2.0f - 1.0f;
 	return height;
+}
+
+float Ground::getSmoothNoise(int x, int z)
+{
+	float corners = (getNoise(x-1, z-1) + getNoise(x+1, z-1) + getNoise(x-1, z+1) + getNoise(x+1, z+1))
+		/ 16.0f; // Divide by 16 to minimize the effect of the corner points
+	float sides = (getNoise(x-1, z) + getNoise(x+1, z) + getNoise(x, z-1) + getNoise(x, z+1))
+		/ 8.0f; // Divide by 8 this time
+	float center = (getNoise(x, z)) / 4.0f; // The main point, divide it by 4 only
+
+	return corners + sides + center;
+}
+
+float Ground::interpolate(float a, float b, float blend)
+{
+	double theta = blend * 3.14159265359;
+	float f = (float)(1.0f - cosf(theta)) * 0.5f;
+	return a * (1.0f - f) + b * f;
+}
+
+float Ground::getInterpolatedNoise(float x, float z)
+{
+	int intX = (int)x;
+	int intZ = (int)z;
+
+	float fracX = x - intX;
+	float fracZ = z - intZ;
+
+	float v1 = getSmoothNoise(intX, intZ);
+	float v2 = getSmoothNoise(intX + 1, intZ);
+	float v3 = getSmoothNoise(intX, intZ + 1);
+	float v4 = getSmoothNoise(intX + 1, intZ + 1);
+
+	float i1 = interpolate(v1, v2, fracX);
+	float i2 = interpolate(v3, v4, fracX);
+
+	return interpolate(i1, i2, fracZ);
 }
