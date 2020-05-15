@@ -688,7 +688,6 @@ int main(int argc, char*argv[])
 
 	}
 
-
 	// Shutdown GLFW
 	glfwTerminate();
 

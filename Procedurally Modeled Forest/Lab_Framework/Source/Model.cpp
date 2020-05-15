@@ -58,10 +58,15 @@ Wolf::Wolf(vec3 translation, vec3 scale)
 Ground::Ground()
 {
 	for (int i = 0; i < 129; i++) {
-		this->grid.push_back(vector<float>());
+		this->grid.push_back(vector<vector<float>>());
+		for (int j = 0; j < 129; j++) {
+			this->grid[i].push_back(vector<float>());
+		}
 	}
 
 	this->amplitude = 10.0f;
+	this->octaves = 3;
+	this->roughness = 3.0f; // 3.0f for 1/3 == 1/roughness
 	this->seed = (rand() % 1000000000);
 }
 
@@ -88,7 +93,7 @@ GLuint Ground::makeHeightMap(int seed, int zoom, double persistence, float minHe
 		{
 			c = (1.0 + myNoise.perlinNoise2D(8, i, j)) / 2.0;
 			image[i][j] = (float)interpolate(minHeight, maxHeight, c);
-			this->grid[i].push_back(image[i][j]);
+			this->grid[i][j].push_back(image[i][j]);
 			//cout << ((image[i][j]*1000)/10.0f) << " ";
 		}
 		//cout << endl;
@@ -116,18 +121,53 @@ GLuint Ground::makeHeightMap(int seed, int zoom, double persistence, float minHe
 void Ground::generateHeight(int resolution)
 {
 	float height;
+	vec3 normal;
 	
 	for (int i = 0; i < (resolution + 1); i++) {
 		for (int j = 0; j < (resolution + 1); j++) {
-			height = getInterpolatedNoise(i / 12.0f, j / 12.0f) * this->amplitude;
-			height += getInterpolatedNoise(i / 6.0f, j / 6.0f) * this->amplitude / 3.0f;
-			height += getInterpolatedNoise(i / 3.0f, j / 3.0f) * this->amplitude / 9.0f;
-			// We do it three times to add more small frequencies 
+			height = getHeight(i, j);
+			// We do it three (octaves) times to add more small frequencies 
 
-			this->grid[i].push_back(height);
+			normal = calculateNormal(i, j);
+
+			this->grid[i][j].push_back(height);
+			this->grid[i][j].push_back(normal.x);
+			this->grid[i][j].push_back(normal.y);
+			this->grid[i][j].push_back(normal.z);
 		}
 	}
 }
+
+float Ground::getHeight(int x, int z)
+{
+	float height = 0;
+	float multiplier = 1.0f;
+	float roughness = 1.0f;
+
+	for (int i = 0; i < this->octaves; i++) {
+		height += getInterpolatedNoise(x / 12.0f * multiplier, z / 12.0f * multiplier)
+			* this->amplitude * roughness;
+		multiplier *= 2.0f; // Multiply by 2
+		roughness *= (1.0f / this->roughness);
+	}
+
+	return height;
+}
+
+vec3 Ground::calculateNormal(int x, int z)
+{
+	float heightLeft = getHeight(x-1, z);
+	float heightRight = getHeight(x + 1, z);
+	float heightDown = getHeight(x, z - 1);
+	float heightUp = getHeight(x, z + 1);
+
+	vec3 normal = vec3(heightLeft - heightRight, 2.0f, heightDown - heightUp);
+	normal = normalize(normal);
+
+	return normal;
+}
+
+//--------------------------------------------------------------------------------------------//
 
 float Ground::getNoise(int x, int z)
 {

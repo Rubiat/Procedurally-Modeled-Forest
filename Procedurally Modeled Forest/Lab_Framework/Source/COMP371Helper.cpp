@@ -1,4 +1,4 @@
-#include "COMP371Helper.h"
+#include "Model.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -251,7 +251,7 @@ int createVertexArrayObjectCube()
 	return vertexArrayObject;
 }
 
-int createVertexArrayObjectGround(vector<vector<float>> grid) {
+int createVertexArrayObjectGround(vector<vector<vector<float>>> grid) {
 	// The grid will be 128x128 (instead of 100x100), and for the triangle strips 
 	// it will be 32x32. Therefore we will have to multiply by 4 (instead of 50) while rendering
 	int const size = 32;
@@ -275,6 +275,8 @@ int createVertexArrayObjectGround(vector<vector<float>> grid) {
 	int uvX = 0;
 	int uvZ = 0;
 
+	vec3 normal;
+
 	for (int j = 1; j <= size; j++) { // Repeat it 32 times for each row
 		// In each iteration, a total of 68 vertices are added (68 for actual triangles + 2 for degenerates)
 
@@ -282,8 +284,12 @@ int createVertexArrayObjectGround(vector<vector<float>> grid) {
 
 			uvX = (uv.s * 32.0f) * 4.0f;
 			uvZ = (uv.t * 32.0f) * 4.0f;
-			vertex.y = grid[uvX][uvZ];
-			VertexTexture v(vertex, uv, vec3(0.0f, 1.0f, 0.0f));
+			vertex.y = grid[uvX][uvZ][0];
+			normal.x = grid[uvX][uvZ][1];
+			normal.y = grid[uvX][uvZ][2];
+			normal.z = grid[uvX][uvZ][3];
+
+			VertexTexture v(vertex, uv, normal);
 			vertexArray[index++] = v;
 			// When assigning to an index, increment it at the same time (index++)
 
@@ -311,10 +317,13 @@ int createVertexArrayObjectGround(vector<vector<float>> grid) {
 		uv.t = ((float)j / size); // (1.0f / size), (2.0f / size), (2.0f / size), etc;
 		uvX = (uv.s * 32.0f) * 4.0f;
 		uvZ = (uv.t * 32.0f) * 4.0f;
-		vertex.y = grid[uvX][uvZ];
+		vertex.y = grid[uvX][uvZ][0];
+		normal.x = grid[uvX][uvZ][1];
+		normal.y = grid[uvX][uvZ][2];
+		normal.z = grid[uvX][uvZ][3];
 
 		// The second degenerate is the same as the first vertex of the next row
-		VertexTexture v(vertex, uv, vec3(0.0f, 1.0f, 0.0f));
+		VertexTexture v(vertex, uv, normal);
 		vertexArray[index++] = v;
 	}
 

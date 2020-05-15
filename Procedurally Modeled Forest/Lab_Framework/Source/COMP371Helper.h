@@ -38,7 +38,7 @@ struct BoundingBox {
 bool initContext();
 int compileAndLinkShaders(string vertexPath, string fragmentPath);
 int createVertexArrayObjectCube();
-int createVertexArrayObjectGround(vector<vector<float>> grid);
+int createVertexArrayObjectGround(vector<vector<vector<float>>> grid);
 int createVertexArrayObjectParticles();
 GLuint loadTexture(const char* filename);
 double interpolate(double a, double b, double x);
