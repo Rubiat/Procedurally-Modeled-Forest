@@ -47,7 +47,7 @@ int main(int argc, char*argv[])
 #endif
 
 	Ground ground;
-	ground.generateHeight(128); // Make 128x128 heightMap
+	ground.generateHeight(); // Make 128x128 heightMap
 
 
 	// GL_TEXTURE0 IS RESERVED FOR SHADOW MAPPING
@@ -244,10 +244,10 @@ int main(int argc, char*argv[])
 	for (int i = 0; i < numberOfTrees; i++) {
 		while (true) {
 			bool tooClose = false;
-			x = (rand() % 129); // Generate number from 0 to 128
-			x -= 64; // Make its range from -64 to 64
-			z = (rand() % 129);
-			z -= 64;
+			x = (rand() % 128); // Generate number from 0 to 127
+			x -= 63; // Make its range from -63 to 63
+			z = (rand() % 128);
+			z -= 63;
 
 			for (int j = 0; j < 4; j++) {// 4 because there are 4 quadrants
 				for (int k = 0; k < models[j].size(); k++) {
@@ -267,15 +267,15 @@ int main(int argc, char*argv[])
 		scaleFactor = (int) ((rand() % 6) + 5); // Generate number from 5 to 10
 		scaleFactor = (float) scaleFactor / 10; // Get value from 0.5 to 1.0
 
-		Tree tree(vec3(x, 0.0f, z), vec3(scaleFactor, scaleFactor, scaleFactor));
+		Tree tree(vec3(x, ground.getHeightOfTerrain(x, z), z), vec3(scaleFactor, scaleFactor, scaleFactor));
 
 		// Insert the tree into the vector of its quadrant
-		//models[getCurrentQuadrant(vec3(x, 0.0f, z))].push_back(tree);
+		models[getCurrentQuadrant(vec3(x, 0.0f, z))].push_back(tree);
 	}
 
 	//--------------------------------------Create wolf-----------------------------------------//
 
-	Wolf wolf(vec3(20.0f, 3.5f, -20.0f), vec3(1.0f, 1.0f, 1.0f));
+	Wolf wolf(vec3(20.0f, 3.5f + ground.getHeightOfTerrain(20.0f, -20.0f), -20.0f), vec3(1.0f, 1.0f, 1.0f));
 	models[0].push_back(wolf);
 
 	//--------------------------------------Create snow particles-------------------------------//
@@ -387,31 +387,31 @@ int main(int argc, char*argv[])
 
 		//-----------------------------------Draw Trees---------------------------------------//
 
-		//for (int i = 0; i < 4; i++) {
-		//	int size = models[i].size();
-		//	if (i == 0) {
-		//		size--;
-		//	}
-		//	for (int j = 0; j < size; j++) {
-		//		worldMatrix = translate(mat4(1.0f), models[i][j].translationVector) *
-		//			scale(mat4(1.0f), models[i][j].scaleVector);
-		//		setMat4(shaderProgramTexture, "worldMatrix", worldMatrix);
+		for (int i = 0; i < 4; i++) {
+			int size = models[i].size();
+			if (i == 0) {
+				size--;
+			}
+			for (int j = 0; j < size; j++) {
+				worldMatrix = translate(mat4(1.0f), models[i][j].translationVector) *
+					scale(mat4(1.0f), models[i][j].scaleVector);
+				setMat4(shaderProgramTexture, "worldMatrix", worldMatrix);
 
-		//		// Draw trunk
-		//		glActiveTexture(GL_TEXTURE0 + 4);
-		//		glBindTexture(GL_TEXTURE_2D, trunkTextureID);
-		//		setTexture(shaderProgramTexture, "textureSampler", 4);
-		//		glBindVertexArray(vaoTrunkModel);
-		//		glDrawElements(GL_TRIANGLES, trunkVertices, GL_UNSIGNED_INT, 0);
+				// Draw trunk
+				glActiveTexture(GL_TEXTURE0 + 4);
+				glBindTexture(GL_TEXTURE_2D, trunkTextureID);
+				setTexture(shaderProgramTexture, "textureSampler", 4);
+				glBindVertexArray(vaoTrunkModel);
+				glDrawElements(GL_TRIANGLES, trunkVertices, GL_UNSIGNED_INT, 0);
 
-		//		// Draw leaves
-		//		glActiveTexture(GL_TEXTURE0 + 1);
-		//		glBindTexture(GL_TEXTURE_2D, grassTextureID);
-		//		setTexture(shaderProgramTexture, "textureSampler", 1);
-		//		glBindVertexArray(vaoLeavesModel);
-		//		glDrawElements(GL_TRIANGLES, leavesVertices, GL_UNSIGNED_INT, 0);
-		//	}
-		//}
+				// Draw leaves
+				glActiveTexture(GL_TEXTURE0 + 1);
+				glBindTexture(GL_TEXTURE_2D, grassTextureID);
+				setTexture(shaderProgramTexture, "textureSampler", 1);
+				glBindVertexArray(vaoLeavesModel);
+				glDrawElements(GL_TRIANGLES, leavesVertices, GL_UNSIGNED_INT, 0);
+			}
+		}
 
 		//---------------------------------Draw Snow Particles----------------------------------//
 		
@@ -542,6 +542,11 @@ int main(int argc, char*argv[])
 		{
 			cameraPosition -= cameraSideVector * currentCameraSpeed * dt;
 
+			float groundHeight = ground.getHeightOfTerrain(cameraPosition.x, cameraPosition.z) + 0.1f;
+			if (cameraPosition.y < groundHeight) {
+				cameraPosition.y = groundHeight;
+			}
+
 			int currentQuadrant = getCurrentQuadrant(cameraPosition);
 			for (int i = 0; i < models[currentQuadrant].size(); i++) {
 				if (checkCollision(cameraPosition, models[currentQuadrant][i].box)) {
@@ -555,6 +560,11 @@ int main(int argc, char*argv[])
 		{
 			cameraPosition += cameraSideVector * currentCameraSpeed * dt;
 
+			float groundHeight = ground.getHeightOfTerrain(cameraPosition.x, cameraPosition.z) + 0.1f;
+			if (cameraPosition.y < groundHeight) {
+				cameraPosition.y = groundHeight;
+			}
+
 			int currentQuadrant = getCurrentQuadrant(cameraPosition);
 			for (int i = 0; i < models[currentQuadrant].size(); i++) {
 				if (checkCollision(cameraPosition, models[currentQuadrant][i].box)) {
@@ -567,7 +577,12 @@ int main(int argc, char*argv[])
 		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) // move camera forward
 		{
 			cameraPosition += cameraLookAt * currentCameraSpeed * dt;
-			cameraPosition.y = std::max(0.1f, cameraPosition.y); // Make sure it doesn't go below ground
+			//cameraPosition.y = std::max(0.1f, cameraPosition.y); // Make sure it doesn't go below ground
+			
+			float groundHeight = ground.getHeightOfTerrain(cameraPosition.x, cameraPosition.z) + 0.1f;
+			if (cameraPosition.y < groundHeight) {
+				cameraPosition.y = groundHeight;
+			}
 
 			int currentQuadrant = getCurrentQuadrant(cameraPosition);
 			for (int i = 0; i < models[currentQuadrant].size(); i++) {
@@ -581,7 +596,12 @@ int main(int argc, char*argv[])
 		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) // move camera backward
 		{
 			cameraPosition -= cameraLookAt * currentCameraSpeed * dt;
-			cameraPosition.y = std::max(0.1f, cameraPosition.y); // Make sure it doesn't go below ground
+			//cameraPosition.y = std::max(0.1f, cameraPosition.y); // Make sure it doesn't go below ground
+
+			float groundHeight = ground.getHeightOfTerrain(cameraPosition.x, cameraPosition.z) + 0.1f;
+			if (cameraPosition.y < groundHeight) {
+				cameraPosition.y = groundHeight;
+			}
 
 			int currentQuadrant = getCurrentQuadrant(cameraPosition);
 			for (int i = 0; i < models[currentQuadrant].size(); i++) {

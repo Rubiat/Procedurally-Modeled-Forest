@@ -64,6 +64,7 @@ Ground::Ground()
 		}
 	}
 
+	this->resolution = 128;
 	this->amplitude = 10.0f;
 	this->octaves = 3;
 	this->roughness = 3.0f; // 3.0f for 1/3 == 1/roughness
@@ -118,22 +119,22 @@ GLuint Ground::makeHeightMap(int seed, int zoom, double persistence, float minHe
 	return textureId;
 }
 
-void Ground::generateHeight(int resolution)
+void Ground::generateHeight()
 {
 	float height;
 	vec3 normal;
 	
 	for (int i = 0; i < (resolution + 1); i++) {
 		for (int j = 0; j < (resolution + 1); j++) {
-			height = getHeight(i, j);
+			height = getHeight(j, i);
 			// We do it three (octaves) times to add more small frequencies 
 
-			normal = calculateNormal(i, j);
+			normal = calculateNormal(j, i);
 
-			this->grid[i][j].push_back(height);
-			this->grid[i][j].push_back(normal.x);
-			this->grid[i][j].push_back(normal.y);
-			this->grid[i][j].push_back(normal.z);
+			this->grid[j][i].push_back(height);
+			this->grid[j][i].push_back(normal.x);
+			this->grid[j][i].push_back(normal.y);
+			this->grid[j][i].push_back(normal.z);
 		}
 	}
 }
@@ -212,4 +213,47 @@ float Ground::getInterpolatedNoise(float x, float z)
 	float i2 = interpolate(v3, v4, fracX);
 
 	return interpolate(i1, i2, fracZ);
+}
+
+float Ground::getHeightOfTerrain(float worldX, float worldZ)
+{
+	// worldX and worldZ represent that the xz position at world space (from -64 to 64)
+	// Convert from world coordinates to terrain coordinates:
+	float terrainX = worldX + 64.0f;
+	float terrainZ = 128 - (worldZ + 64.0f);
+	// 128 -... because z axis negative and positive is inverted from traditional axis
+
+	float gridSquareSize = 1.0f; // = 4
+	// 128 because the size of the grid is 128x128
+	// 32 because the vertices range from -16 to 16 therefore 32x32
+
+	int gridX = (int)floor(terrainX / gridSquareSize);
+	int gridZ = (int)floor(terrainZ / gridSquareSize);
+
+	float zCoord = (fmod(terrainX, gridSquareSize)) / gridSquareSize;
+	float xCoord = (fmod(terrainZ, gridSquareSize)) / gridSquareSize;
+
+	float answer;
+	if (xCoord <= (1 - zCoord)) {
+		answer = barryCentric(vec3(1, grid[gridX + 1][gridZ][0], 0),
+			vec3(1, grid[gridX + 1][gridZ + 1][0], 1),
+			vec3(0, grid[gridX][gridZ + 1][0], 1), vec2(xCoord, zCoord));
+	}
+	else {
+		
+		answer = barryCentric(vec3(0, grid[gridX][gridZ][0], 0),
+			vec3(1, grid[gridX + 1][gridZ][0], 0),
+			vec3(0, grid[gridX][gridZ + 1][0], 1), vec2(xCoord, zCoord));
+	}
+
+	return answer;
+}
+
+float Ground::barryCentric(vec3 p1, vec3 p2, vec3 p3, vec2 pos)
+{
+	float det = (p2.z - p3.z) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.z - p3.z);
+	float l1 = ((p2.z - p3.z) * (pos.x - p3.x) + (p3.x - p2.x) * (pos.y - p3.z)) / det;
+	float l2 = ((p3.z - p1.z) * (pos.x - p3.x) + (p1.x - p3.x) * (pos.y - p3.z)) / det;
+	float l3 = 1.0f - l1 - l2;
+	return l1 * p1.y + l2 * p2.y + l3 * p3.y;
 }

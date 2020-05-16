@@ -48,7 +48,7 @@ public:
 	// makeHeightMap() is not used
 	GLuint makeHeightMap(int seed, int zoom, double persistence, float minHeight, float maxHeight);
 
-	void generateHeight(int resolution); // Ex: 128 for 128x128, 256 for 256x256
+	void generateHeight(); // Ex: 128 for 128x128, 256 for 256x256
 	float getHeight(int x, int z);
 	vec3 calculateNormal(int x, int z);
 
@@ -57,6 +57,11 @@ public:
 
 	float interpolate(float a, float b, float blend);
 	float getInterpolatedNoise(float x, float z);
+
+	float getHeightOfTerrain(float worldX, float worldZ);
+	float barryCentric(vec3 p1, vec3 p2, vec3 p3, vec2 pos);
+
+	int resolution;
 
 	vector<vector<vector<float>>> grid;
 	float amplitude;
