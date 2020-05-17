@@ -244,10 +244,10 @@ int main(int argc, char*argv[])
 	for (int i = 0; i < numberOfTrees; i++) {
 		while (true) {
 			bool tooClose = false;
-			x = (rand() % 128); // Generate number from 0 to 127
-			x -= 63; // Make its range from -63 to 63
-			z = (rand() % 128);
-			z -= 63;
+			x = (rand() % 127) + 1; // Generate number from 1 to 127
+			x -= 64; // Make its range from -63 to 63
+			z = (rand() % 127) + 1;
+			z -= 64;
 
 			for (int j = 0; j < 4; j++) {// 4 because there are 4 quadrants
 				for (int k = 0; k < models[j].size(); k++) {
@@ -326,21 +326,25 @@ int main(int argc, char*argv[])
 
 		//----------------------------------Draw trees shadow----------------------------------//
 
-		//for (int i = 0; i < 4; i++) {
-		//	for (int j = 0; j < models[i].size(); j++) {
-		//		worldMatrix = translate(mat4(1.0f), models[i][j].translationVector) *
-		//			scale(mat4(1.0f), models[i][j].scaleVector);
-		//		setMat4(shaderProgramShadow, "worldMatrix", worldMatrix);
+		for (int i = 0; i < 4; i++) {
+			int size = models[i].size();
+			if (i == 0) {
+				size--;
+			}
+			for (int j = 0; j < size; j++) {
+				worldMatrix = translate(mat4(1.0f), models[i][j].translationVector) *
+					scale(mat4(1.0f), models[i][j].scaleVector);
+				setMat4(shaderProgramShadow, "worldMatrix", worldMatrix);
 
-		//		// Draw trunk
-		//		glBindVertexArray(vaoTrunkModel);
-		//		glDrawElements(GL_TRIANGLES, trunkVertices, GL_UNSIGNED_INT, 0);
+				// Draw trunk
+				glBindVertexArray(vaoTrunkModel);
+				glDrawElements(GL_TRIANGLES, trunkVertices, GL_UNSIGNED_INT, 0);
 
-		//		// Draw leaves
-		//		glBindVertexArray(vaoLeavesModel);
-		//		glDrawElements(GL_TRIANGLES, leavesVertices, GL_UNSIGNED_INT, 0);
-		//	}
-		//}
+				// Draw leaves
+				glBindVertexArray(vaoLeavesModel);
+				glDrawElements(GL_TRIANGLES, leavesVertices, GL_UNSIGNED_INT, 0);
+			}
+		}
 
 		//----------------------------------Draw wolf shadow----------------------------------//
 
@@ -542,7 +546,7 @@ int main(int argc, char*argv[])
 		{
 			cameraPosition -= cameraSideVector * currentCameraSpeed * dt;
 
-			float groundHeight = ground.getHeightOfTerrain(cameraPosition.x, cameraPosition.z) + 0.1f;
+			float groundHeight = ground.getHeightOfTerrain(cameraPosition.x, cameraPosition.z) + 0.3f;
 			if (cameraPosition.y < groundHeight) {
 				cameraPosition.y = groundHeight;
 			}
@@ -560,7 +564,7 @@ int main(int argc, char*argv[])
 		{
 			cameraPosition += cameraSideVector * currentCameraSpeed * dt;
 
-			float groundHeight = ground.getHeightOfTerrain(cameraPosition.x, cameraPosition.z) + 0.1f;
+			float groundHeight = ground.getHeightOfTerrain(cameraPosition.x, cameraPosition.z) + 0.3f;
 			if (cameraPosition.y < groundHeight) {
 				cameraPosition.y = groundHeight;
 			}
@@ -579,7 +583,7 @@ int main(int argc, char*argv[])
 			cameraPosition += cameraLookAt * currentCameraSpeed * dt;
 			//cameraPosition.y = std::max(0.1f, cameraPosition.y); // Make sure it doesn't go below ground
 			
-			float groundHeight = ground.getHeightOfTerrain(cameraPosition.x, cameraPosition.z) + 0.1f;
+			float groundHeight = ground.getHeightOfTerrain(cameraPosition.x, cameraPosition.z) + 0.3f;
 			if (cameraPosition.y < groundHeight) {
 				cameraPosition.y = groundHeight;
 			}
@@ -598,7 +602,7 @@ int main(int argc, char*argv[])
 			cameraPosition -= cameraLookAt * currentCameraSpeed * dt;
 			//cameraPosition.y = std::max(0.1f, cameraPosition.y); // Make sure it doesn't go below ground
 
-			float groundHeight = ground.getHeightOfTerrain(cameraPosition.x, cameraPosition.z) + 0.1f;
+			float groundHeight = ground.getHeightOfTerrain(cameraPosition.x, cameraPosition.z) + 0.3f;
 			if (cameraPosition.y < groundHeight) {
 				cameraPosition.y = groundHeight;
 			}

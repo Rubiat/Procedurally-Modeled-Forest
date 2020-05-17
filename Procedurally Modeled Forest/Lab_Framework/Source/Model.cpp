@@ -233,6 +233,11 @@ float Ground::getHeightOfTerrain(float worldX, float worldZ)
 	float zCoord = (fmod(terrainX, gridSquareSize)) / gridSquareSize;
 	float xCoord = (fmod(terrainZ, gridSquareSize)) / gridSquareSize;
 
+	if (gridX >= (this->resolution - 1) || gridZ >= (this->resolution - 1)
+		|| gridX < 0 || gridZ < 0) {
+		return 0; // return 0 for height if position is out of the map
+	}
+
 	float answer;
 	if (xCoord <= (1 - zCoord)) {
 		answer = barryCentric(vec3(1, grid[gridX + 1][gridZ][0], 0),
