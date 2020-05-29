@@ -217,8 +217,8 @@ int main(int argc, char*argv[])
 	bool snowEnabled = true; // Used for toggling snow on/off
 	bool snowPressed = false;// Goes with above /\
 
-	/*ISoundEngine* SoundEngine = createIrrKlangDevice();
-	SoundEngine->play2D("../Assets/Audio/piano.mp3", GL_TRUE);*/
+	ISoundEngine* SoundEngine = createIrrKlangDevice();
+	SoundEngine->play2D("../Assets/Audio/Bee Gees - Stayin Alive.mp3", GL_TRUE);
 
 	//-----------------------------------------Fog ------------------------------------------//
 
